@@ -35,7 +35,9 @@ PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this p
 ## CI
 Follow `spencer-life/github-workflows/ROUTING.md`. Repository-specific commands live in mise. Required local/CI contract is `mise run ci`.
 
-Current required CI calls the shared pinned `ci-mise.yml` and `security-baseline.yml` workflows. Renovate owns dependency and action-pin updates; do not add Dependabot version-update PRs on top of it.
+This repository is public while `spencer-life/github-workflows` is private. GitHub cannot resolve that private reusable workflow from this public repository, so the minimum baseline from trusted catalog commit `742d149b1e75ef50184861f984fcfe82dfe9d833` is mirrored locally in `.github/workflows/ci.yml`. Keep it aligned with the catalog rather than inventing a parallel CI policy.
+
+Renovate is configured locally for the same reason; do not add Dependabot version-update PRs on top of it. Renovate GitHub App access still must be verified separately.
 
 Use a working branch. After each coherent validated slice, inspect the actual diff/history and commit with the repository's established style. Keep commits small and meaningful.
 

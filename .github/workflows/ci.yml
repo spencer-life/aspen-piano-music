@@ -10,9 +10,71 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   core:
-    uses: spencer-life/github-workflows/.github/workflows/ci-mise.yml@742d149b1e75ef50184861f984fcfe82dfe9d833
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: true
+
+      - run: mise run ci
 
   security:
-    uses: spencer-life/github-workflows/.github/workflows/security-baseline.yml@742d149b1e75ef50184861f984fcfe82dfe9d833
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: gitleaks
+        name: Scan committed secrets
+        continue-on-error: true
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: actionlint
+        name: Check GitHub Actions workflow correctness
+        continue-on-error: true
+        uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+        with:
+          args: -color
+
+      - id: zizmor
+        name: Check GitHub Actions security
+        continue-on-error: true
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          advanced-security: false
+          online-audits: false
+
+      - name: Enforce security baseline
+        if: always()
+        shell: bash
+        env:
+          GITLEAKS_OUTCOME: ${{ steps.gitleaks.outcome }}
+          ACTIONLINT_OUTCOME: ${{ steps.actionlint.outcome }}
+          ZIZMOR_OUTCOME: ${{ steps.zizmor.outcome }}
+        run: |
+          set -euo pipefail
+          status=0
+          for check in "$GITLEAKS_OUTCOME" "$ACTIONLINT_OUTCOME" "$ZIZMOR_OUTCOME"; do
+            if [[ "$check" != "success" ]]; then
+              status=1
+            fi
+          done
+          exit "$status"
