@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    uses: spencer-life/github-workflows/.github/workflows/ci-mise.yml@742d149b1e75ef50184861f984fcfe82dfe9d833
+
+  security:
+    uses: spencer-life/github-workflows/.github/workflows/security-baseline.yml@742d149b1e75ef50184861f984fcfe82dfe9d833

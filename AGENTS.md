@@ -28,10 +28,14 @@ Source: `backend/worker/`.
 Base image: `tanchihpin0517/picogen2:latest-full`.
 Expected GPU: at least 24 GB VRAM for initial production configuration; optimize only after measuring.
 
+Worker image publishing is handled by `.github/workflows/worker-image.yml` and targets `ghcr.io/spencer-life/aspen-piano-music-worker`.
+
 PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
 
 ## CI
 Follow `spencer-life/github-workflows/ROUTING.md`. Repository-specific commands live in mise. Required local/CI contract is `mise run ci`.
+
+Current required CI calls the shared pinned `ci-mise.yml` and `security-baseline.yml` workflows. Renovate owns dependency and action-pin updates; do not add Dependabot version-update PRs on top of it.
 
 Use a working branch. After each coherent validated slice, inspect the actual diff/history and commit with the repository's established style. Keep commits small and meaningful.
 
@@ -43,4 +47,4 @@ Primary action: paste a YouTube link, optionally edit the title, generate, then 
 WebMCP/agent controls may be added for development/review, but must not expose secrets or hidden mutable production state. Chrome DevTools/browser QA should judge the rendered production result.
 
 ## Manual prerequisites
-Keep manual account/credential steps until the end. The intended final manual steps are: authorize/deploy the RunPod endpoint, supply its API key/endpoint ID to Netlify, and connect the Netlify site to this repository if it is not already connected.
+Keep manual account/credential steps until the end. The intended final manual steps are: authorize/deploy the RunPod endpoint, supply its API key/endpoint ID to Netlify, make the GHCR worker package readable by RunPod if necessary, verify Renovate repository access, and connect the Netlify site to this repository if it is not already connected.
