@@ -1,0 +1,20 @@
+[tools]
+node = "24"
+python = "3.13"
+
+[tasks.install]
+run = "npm install --no-audit --no-fund"
+
+[tasks.ci]
+depends = ["install"]
+run = [
+  "npm run typecheck",
+  "npm test",
+  "python3 -m unittest discover -s backend/worker -p 'test_*.py'",
+]
+
+[tasks."worker:test"]
+run = "python3 -m unittest discover -s backend/worker -p 'test_*.py'"
+
+[tasks."worker:build"]
+run = "docker build -f backend/worker/Dockerfile -t aspen-keys-worker ."
