@@ -4,21 +4,27 @@ Aspen Keys exposes a small WebMCP surface from the production page so agents can
 
 ## Chrome DevTools MCP
 
-Current Chrome DevTools MCP can discover and execute WebMCP tools when its experimental WebMCP category is enabled.
+Current Chrome DevTools MCP can discover and execute WebMCP tools when its experimental WebMCP category is enabled. Current Chrome DevTools MCP documentation also requires Chrome 150+ launched with the WebMCP feature flag.
 
 Codex one-time setup:
 
 ```bash
-codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true
+codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest \
+  --categoryExperimentalWebmcp=true \
+  --chromeArg=--enable-features=WebMCP \
+  --isolated=true
 ```
 
 Or run it directly for another MCP client:
 
 ```bash
-npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true
+npx -y chrome-devtools-mcp@latest \
+  --categoryExperimentalWebmcp=true \
+  --chromeArg=--enable-features=WebMCP \
+  --isolated=true
 ```
 
-Do not run a remote-debugging Chrome profile while signed into sensitive sites.
+The isolated profile is intentional: do not attach an agent-controlled remote-debugging browser to a profile that is signed into sensitive sites.
 
 ## Page tools
 
@@ -31,7 +37,7 @@ Registered tools:
 - `start_arrangement`: starts the same real generation path as the button. It is marked consequential because it can consume paid RunPod GPU time.
 - `reset_arrangement`: resets the visible result/status state.
 
-Never add hidden admin operations, secret reads, RunPod credentials, or deployment controls to the production WebMCP surface.
+Never add hidden admin operations, secret reads, RunPod credentials, access-code reads, or deployment controls to the production WebMCP surface.
 
 ## Agent QA loop
 

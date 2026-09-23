@@ -11,6 +11,9 @@ run = [
   "npm run typecheck",
   "npm test",
   "mise run site:ci",
+  "node --check scripts/provision-runpod.mjs",
+  "node --check scripts/smoke-runpod.mjs",
+  "python3 -m py_compile scripts/verify-bundle.py",
   "python3 -m unittest discover -s backend/worker -p 'test_*.py'",
 ]
 
@@ -35,4 +38,4 @@ run = "node scripts/provision-runpod.mjs"
 run = "node scripts/smoke-runpod.mjs"
 
 [tasks."agent:chrome"]
-run = "npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true"
+run = "npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true --chromeArg=--enable-features=WebMCP --isolated=true"

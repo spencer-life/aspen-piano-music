@@ -516,3 +516,104 @@ footer span:first-child {
     animation-duration: 0.01ms !important;
   }
 }
+
+
+.access-dialog {
+  width: min(430px, calc(100% - 28px));
+  border: 0;
+  border-radius: 18px;
+  padding: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  box-shadow: 0 24px 70px rgba(15, 27, 22, 0.22);
+}
+
+.access-dialog::backdrop {
+  background: rgba(14, 27, 22, 0.55);
+}
+
+.access-dialog form {
+  padding: 30px;
+}
+
+.dialog-kicker {
+  margin: 0 0 10px;
+  color: var(--forest);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.access-dialog h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.access-dialog > form > p:not(.dialog-kicker):not(.dialog-error) {
+  margin: 12px 0 22px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.dialog-field {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog-field span {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dialog-field input {
+  min-height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.dialog-error {
+  margin: 10px 0 0;
+  color: var(--error);
+  font-size: 0.86rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 24px;
+}
+
+.dialog-actions button {
+  min-height: 44px;
+  border-radius: 9px;
+  padding: 0 15px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+#access-cancel {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+
+.dialog-primary {
+  border: 0;
+  background: var(--forest);
+  color: #fffdf8;
+}
+
+.download-action:disabled {
+  cursor: wait;
+  opacity: 0.62;
+  transform: none;
+}

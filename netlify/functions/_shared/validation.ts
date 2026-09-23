@@ -4,7 +4,7 @@ export function normalizeCreatePayload(value: unknown) {
   if (!value || typeof value !== "object") throw new Error("Request body is required.");
   const body = value as Record<string, unknown>;
   const sourceUrl = String(body.sourceUrl ?? "").trim();
-  const title = String(body.title ?? "Aspen Keys Arrangement").trim().slice(0, 96) || "Aspen Keys Arrangement";
+  const title = String(body.title ?? "").trim().slice(0, 96);
 
   let url: URL;
   try {

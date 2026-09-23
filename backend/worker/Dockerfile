@@ -7,7 +7,7 @@ RUN apt-get update \
 
 USER picogen2
 WORKDIR /opt/aspen-keys
-COPY backend/worker/core.py backend/worker/handler.py ./
+COPY backend/worker/core.py backend/worker/engraving.py backend/worker/handler.py backend/worker/aspen-keys.mss ./
 RUN conda run -n picogen2 --no-capture-output pip install --no-cache-dir "runpod==1.12.0"
 
 ENV PICOGEN_ROOT=/home/picogen2/picogen2 \

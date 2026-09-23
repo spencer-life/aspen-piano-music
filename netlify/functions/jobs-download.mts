@@ -1,7 +1,11 @@
 import type { Config, Context } from "@netlify/functions";
+import { requireAspenAccess } from "./_shared/auth.ts";
 import { artifactStore, safeJobId } from "./_shared/runpod.ts";
 
-export default async (_req: Request, context: Context) => {
+export default async (req: Request, context: Context) => {
+  const accessResponse = await requireAspenAccess(req);
+  if (accessResponse) return accessResponse;
+
   try {
     const jobId = safeJobId(context.params.jobId ?? "");
     const store = artifactStore(context);

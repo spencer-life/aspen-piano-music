@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 
 const apiKey = process.env.RUNPOD_API_KEY;
 const endpointId = process.env.RUNPOD_ENDPOINT_ID;
@@ -47,9 +48,17 @@ for (;;) {
     if (!output?.bundle_base64 || !output.bundle_name) {
       throw new Error("Worker completed without a bundle.");
     }
+
     const file = Buffer.from(output.bundle_base64, "base64");
     await fs.writeFile(output.bundle_name, file);
     console.log(`Saved ${output.bundle_name} (${file.length} bytes)`);
+
+    const verify = spawnSync(
+      "python3",
+      ["scripts/verify-bundle.py", output.bundle_name],
+      { stdio: "inherit" },
+    );
+    if (verify.status !== 0) throw new Error("Bundle verification failed.");
     break;
   }
 

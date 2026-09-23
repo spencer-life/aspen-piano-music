@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#17382f">
   <meta name="description" content="Aspen Keys turns a YouTube song into a playable piano arrangement with printable sheet music, MusicXML, MIDI, and piano audio.">
+  <meta name="robots" content="noindex,nofollow,noarchive">
   <title>Aspen Keys — Turn a song into something Aspen can play</title>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
@@ -98,12 +99,12 @@
           <h3 id="ready-title">Your piano arrangement is ready.</h3>
           <p>One download includes the printable score, MusicXML, MIDI, and a piano MP3.</p>
         </div>
-        <a id="download-link" class="download-action" href="#" download>
+        <button id="download-link" class="download-action" type="button">
           Download everything
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 16h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </a>
+        </button>
       </div>
 
       <div id="error-region" class="error-region" role="alert" hidden>
@@ -131,5 +132,22 @@
       <span>Made with care, one song at a time.</span>
     </footer>
   </main>
+
+  <dialog id="access-dialog" class="access-dialog">
+    <form id="access-form">
+      <p class="dialog-kicker">Private for Aspen</p>
+      <h2>One little key first.</h2>
+      <p>This keeps the piano generator private and prevents strangers from using the GPU.</p>
+      <label class="dialog-field">
+        <span>Access code</span>
+        <input id="access-code" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="access-error" class="dialog-error" hidden>That code didn’t work. Try it again.</p>
+      <div class="dialog-actions">
+        <button id="access-cancel" type="button">Cancel</button>
+        <button class="dialog-primary" type="submit">Open Aspen Keys</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

@@ -55,7 +55,10 @@ Then configure Netlify with:
 ```text
 RUNPOD_API_KEY
 RUNPOD_ENDPOINT_ID
+ASPEN_ACCESS_CODE
 ```
+
+`ASPEN_ACCESS_CODE` is a private code Aspen enters once in the browser. It is stored only in that browser's local storage and sent to Netlify Functions in the `X-Aspen-Key` header. The API refuses paid generation until this value exists.
 
 RunPod queue API authentication uses the raw API key in the `Authorization` header.
 
@@ -84,5 +87,6 @@ Do these only after code, CI, worker image, frontend, and Netlify project are ot
 1. Add billing/API access to RunPod.
 2. Make the GHCR package public, or add GHCR registry credentials to RunPod.
 3. Run `mise run runpod:provision`.
-4. Add `RUNPOD_API_KEY` and generated `RUNPOD_ENDPOINT_ID` to Netlify.
-5. Run the Goodday end-to-end smoke test and inspect the generated PDF before calling production ready.
+4. Add `RUNPOD_API_KEY`, generated `RUNPOD_ENDPOINT_ID`, and a private `ASPEN_ACCESS_CODE` to Netlify.
+5. Connect/deploy the Netlify project from the GitHub repository.
+6. Run the Goodday end-to-end smoke test and inspect the generated PDF before calling production ready.

@@ -8,12 +8,12 @@ import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
-from xml.etree import ElementTree as ET
 
 import runpod
 import torch
 
 from core import sanitize_title, validate_youtube_url
+from engraving import STYLE_PATH, patch_musicxml
 
 PICOGEN_ROOT = Path(os.getenv("PICOGEN_ROOT", "/home/picogen2/picogen2"))
 SOUNDFONT = Path(os.getenv("PIANO_SOUNDFONT", "/usr/share/sounds/sf2/FluidR3_GM.sf2"))
@@ -46,7 +46,7 @@ def _musescore_bin() -> str:
     raise RuntimeError("MuseScore CLI is not installed in the worker image.")
 
 
-def _source_duration(source_url: str) -> float | None:
+def _source_metadata(source_url: str) -> dict[str, object]:
     result = _run(
         [
             "conda",
@@ -64,50 +64,17 @@ def _source_duration(source_url: str) -> float | None:
         cwd=PICOGEN_ROOT,
         capture_output=True,
     )
-    metadata = json.loads(result.stdout)
-    duration = metadata.get("duration")
-    return float(duration) if duration is not None else None
+    return json.loads(result.stdout)
 
 
-def _validate_source_duration(source_url: str) -> float | None:
-    duration = _source_duration(source_url)
-    if duration is not None and duration > MAX_SOURCE_SECONDS:
+def _validated_source_metadata(source_url: str) -> dict[str, object]:
+    metadata = _source_metadata(source_url)
+    duration_value = metadata.get("duration")
+    if duration_value is not None and float(duration_value) > MAX_SOURCE_SECONDS:
         raise ValueError(
             f"Songs must be {MAX_SOURCE_SECONDS // 60} minutes or shorter for this version of Aspen Keys."
         )
-    return duration
-
-
-def _patch_musicxml(path: Path, title: str) -> None:
-    tree = ET.parse(path)
-    root = tree.getroot()
-
-    work = root.find("work")
-    if work is None:
-        work = ET.Element("work")
-        root.insert(0, work)
-    work_title = work.find("work-title")
-    if work_title is None:
-        work_title = ET.SubElement(work, "work-title")
-    work_title.text = title
-
-    movement = root.find("movement-title")
-    if movement is None:
-        movement = ET.Element("movement-title")
-        insert_at = 1 if root.find("work") is not None else 0
-        root.insert(insert_at, movement)
-    movement.text = title
-
-    identification = root.find("identification")
-    if identification is None:
-        identification = ET.Element("identification")
-        root.insert(2, identification)
-    creator = identification.find("creator[@type='arranger']")
-    if creator is None:
-        creator = ET.SubElement(identification, "creator", {"type": "arranger"})
-    creator.text = "Aspen Keys"
-
-    tree.write(path, encoding="utf-8", xml_declaration=True)
+    return metadata
 
 
 def _render_artifacts(workdir: Path, title: str) -> dict[str, Path]:
@@ -124,9 +91,19 @@ def _render_artifacts(workdir: Path, title: str) -> dict[str, Path]:
 
     muse = _musescore_bin()
     qt_env = {**os.environ, "QT_QPA_PLATFORM": "offscreen"}
-    _run(["xvfb-run", "-a", muse, "-o", str(musicxml), str(midi)], cwd=workdir, env=qt_env)
-    _patch_musicxml(musicxml, title)
-    _run(["xvfb-run", "-a", muse, "-o", str(pdf), str(musicxml)], cwd=workdir, env=qt_env)
+    style_args = ["-S", str(STYLE_PATH)]
+
+    _run(
+        ["xvfb-run", "-a", muse, *style_args, "-o", str(musicxml), str(midi)],
+        cwd=workdir,
+        env=qt_env,
+    )
+    patch_musicxml(musicxml, title)
+    _run(
+        ["xvfb-run", "-a", muse, *style_args, "-o", str(pdf), str(musicxml)],
+        cwd=workdir,
+        env=qt_env,
+    )
 
     wav = workdir / "piano.wav"
     _run(
@@ -195,13 +172,19 @@ def check_worker_runtime() -> None:
         raise RuntimeError(f"PiCoGen2 infer.sh not found under {PICOGEN_ROOT}.")
     if not SOUNDFONT.exists():
         raise RuntimeError(f"Piano soundfont not found at {SOUNDFONT}.")
+    if not STYLE_PATH.exists():
+        raise RuntimeError(f"Aspen Keys score style not found at {STYLE_PATH}.")
 
 
 def handler(job: dict) -> dict:
     payload = job.get("input") or {}
     source_url = validate_youtube_url(str(payload.get("source_url", "")))
-    title = sanitize_title(payload.get("title"), fallback="Aspen Keys Arrangement")
-    duration = _validate_source_duration(source_url)
+    metadata = _validated_source_metadata(source_url)
+    source_title = str(metadata.get("title") or "").strip()
+    requested_title = str(payload.get("title") or "").strip()
+    title = sanitize_title(requested_title or source_title, fallback="Aspen Keys Arrangement")
+    duration_value = metadata.get("duration")
+    duration = float(duration_value) if duration_value is not None else None
 
     with tempfile.TemporaryDirectory(prefix="aspen-keys-") as tmp:
         workdir = Path(tmp)
@@ -235,6 +218,7 @@ def handler(job: dict) -> dict:
         data = bundle.read_bytes()
 
         manifest["source_duration_seconds"] = duration
+        manifest["source_title"] = source_title or None
         return {
             "bundle_name": bundle.name,
             "bundle_base64": base64.b64encode(data).decode("ascii"),
