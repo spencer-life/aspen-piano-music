@@ -21,14 +21,18 @@ Keep this route minimal. Do not add Demucs, Basic Pitch, Gemini, a database, que
 - `GET /api/jobs/:jobId/download`
 - `GET /api/health`
 
-RunPod secrets are `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`; never expose them to the browser or commit them.
+RunPod secrets are `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`; never expose them to the browser or commit them. RunPod queue endpoints authenticate with the raw API key in the `Authorization` header.
 
 ## Worker
 Source: `backend/worker/`.
 Base image: `tanchihpin0517/picogen2:latest-full`.
-Expected GPU: at least 24 GB VRAM for initial production configuration; optimize only after measuring.
+Expected GPU: 24 GB VRAM for initial production configuration; optimize only after measuring.
 
 Worker image publishing is handled by `.github/workflows/worker-image.yml` and targets `ghcr.io/spencer-life/aspen-piano-music-worker`.
+
+The initial worker caps source videos at six minutes and keeps result bundles below 7 MB so the base64 payload remains safely below RunPod's 10 MB async payload limit. Keep that guard unless artifact transport is redesigned.
+
+RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test.
 
 PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
 
@@ -41,12 +45,13 @@ Renovate is configured locally for the same reason; do not add Dependabot versio
 
 Use a working branch. After each coherent validated slice, inspect the actual diff/history and commit with the repository's established style. Keep commits small and meaningful.
 
-## Frontend (after backend is live)
+## Frontend (after backend is ready for credentials)
 Brand: **Aspen Keys**.
+Tagline: **Turn a song into something Aspen can play.**
 Tone: personal, calm, elegant, piano-first, simple enough to use without technical knowledge.
 Primary action: paste a YouTube link, optionally edit the title, generate, then download the bundle.
 
 WebMCP/agent controls may be added for development/review, but must not expose secrets or hidden mutable production state. Chrome DevTools/browser QA should judge the rendered production result.
 
 ## Manual prerequisites
-Keep manual account/credential steps until the end. The intended final manual steps are: authorize/deploy the RunPod endpoint, supply its API key/endpoint ID to Netlify, make the GHCR worker package readable by RunPod if necessary, verify Renovate repository access, and connect the Netlify site to this repository if it is not already connected.
+Keep manual account/credential steps until the end. See `docs/BACKEND.md`. The intended final manual steps are: authorize RunPod billing/API access, make GHCR readable to RunPod if necessary, provision the endpoint, add its key/ID to Netlify, verify Renovate repository access, and perform the final Goodday end-to-end PDF/audio check.
