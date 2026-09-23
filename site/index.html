@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17382f">
+  <meta name="description" content="Aspen Keys turns a YouTube song into a playable piano arrangement with printable sheet music, MusicXML, MIDI, and piano audio.">
+  <title>Aspen Keys — Turn a song into something Aspen can play</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="masthead" aria-label="Aspen Keys">
+      <a class="brand" href="/" aria-label="Aspen Keys home">
+        <span class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </span>
+        <span>Aspen Keys</span>
+      </a>
+      <span class="made-for">Made for Aspen</span>
+    </header>
+
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="kicker">Your song, at the piano.</p>
+        <h1 id="hero-title">Turn a song into something Aspen can play.</h1>
+        <p class="lede">Paste a YouTube link. Aspen Keys listens for the melody, harmony, and rhythm, then creates a two-hand piano arrangement with polished sheet music.</p>
+      </div>
+
+      <div class="piano-motif" aria-hidden="true">
+        <div class="motif-label">A · S · P · E · N</div>
+        <div class="keys">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <b class="black-key k1"></b>
+          <b class="black-key k2"></b>
+          <b class="black-key k4"></b>
+          <b class="black-key k5"></b>
+          <b class="black-key k6"></b>
+        </div>
+      </div>
+    </section>
+
+    <section class="composer" aria-labelledby="composer-title">
+      <div class="composer-intro">
+        <h2 id="composer-title">Make a piano version</h2>
+        <p>Most songs take a few minutes. You can leave this page open while the arrangement is being made.</p>
+      </div>
+
+      <form id="arrangement-form" novalidate>
+        <label class="field">
+          <span>YouTube link</span>
+          <input
+            id="source-url"
+            name="sourceUrl"
+            type="url"
+            inputmode="url"
+            autocomplete="url"
+            spellcheck="false"
+            placeholder="https://youtu.be/..."
+            required
+          >
+        </label>
+
+        <label class="field">
+          <span>Sheet music title <small>optional</small></span>
+          <input
+            id="song-title"
+            name="title"
+            type="text"
+            maxlength="96"
+            autocomplete="off"
+            placeholder="Song title"
+          >
+        </label>
+
+        <button id="generate-button" class="primary-action" type="submit">
+          <span>Arrange for piano</span>
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4 10h11M11 6l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+
+      <div id="status-region" class="status-region" role="status" aria-live="polite" hidden>
+        <div class="status-topline">
+          <span id="status-dot" class="status-dot" aria-hidden="true"></span>
+          <strong id="status-title">Getting things ready…</strong>
+          <span id="status-time"></span>
+        </div>
+        <p id="status-copy">Aspen Keys is preparing the arrangement.</p>
+        <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+      </div>
+
+      <div id="ready-region" class="ready-region" hidden>
+        <div>
+          <span class="ready-note">Ready to play</span>
+          <h3 id="ready-title">Your piano arrangement is ready.</h3>
+          <p>One download includes the printable score, MusicXML, MIDI, and a piano MP3.</p>
+        </div>
+        <a id="download-link" class="download-action" href="#" download>
+          Download everything
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 16h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+
+      <div id="error-region" class="error-region" role="alert" hidden>
+        <strong>That one didn’t make it to the piano.</strong>
+        <p id="error-copy">Try the link again in a moment.</p>
+        <button id="retry-button" type="button">Try again</button>
+      </div>
+    </section>
+
+    <section class="deliverables" aria-labelledby="deliverables-title">
+      <div>
+        <p class="section-number">01</p>
+        <h2 id="deliverables-title">Everything she needs</h2>
+      </div>
+      <div class="deliverable-list">
+        <div><strong>PDF</strong><span>Clean, printable sheet music</span></div>
+        <div><strong>MusicXML</strong><span>Edit it in MuseScore</span></div>
+        <div><strong>MIDI</strong><span>Exact generated note data</span></div>
+        <div><strong>MP3</strong><span>Hear the piano arrangement</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>Aspen Keys</span>
+      <span>Made with care, one song at a time.</span>
+    </footer>
+  </main>
+</body>
+</html>
