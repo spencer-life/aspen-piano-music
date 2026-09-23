@@ -1,0 +1,17 @@
+{
+  "name": "Aspen Keys",
+  "short_name": "Aspen Keys",
+  "description": "Turn a song into something Aspen can play.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#17382f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
