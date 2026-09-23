@@ -46,7 +46,7 @@ def _musescore_bin() -> str:
     raise RuntimeError("MuseScore CLI is not installed in the worker image.")
 
 
-def _source_duration(source_url: str) -> float | None:
+def _source_metadata(source_url: str) -> dict[str, object]:
     result = _run(
         [
             "conda",
@@ -64,18 +64,17 @@ def _source_duration(source_url: str) -> float | None:
         cwd=PICOGEN_ROOT,
         capture_output=True,
     )
-    metadata = json.loads(result.stdout)
-    duration = metadata.get("duration")
-    return float(duration) if duration is not None else None
+    return json.loads(result.stdout)
 
 
-def _validate_source_duration(source_url: str) -> float | None:
-    duration = _source_duration(source_url)
-    if duration is not None and duration > MAX_SOURCE_SECONDS:
+def _validated_source_metadata(source_url: str) -> dict[str, object]:
+    metadata = _source_metadata(source_url)
+    duration_value = metadata.get("duration")
+    if duration_value is not None and float(duration_value) > MAX_SOURCE_SECONDS:
         raise ValueError(
             f"Songs must be {MAX_SOURCE_SECONDS // 60} minutes or shorter for this version of Aspen Keys."
         )
-    return duration
+    return metadata
 
 
 def _render_artifacts(workdir: Path, title: str) -> dict[str, Path]:
@@ -180,8 +179,12 @@ def check_worker_runtime() -> None:
 def handler(job: dict) -> dict:
     payload = job.get("input") or {}
     source_url = validate_youtube_url(str(payload.get("source_url", "")))
-    title = sanitize_title(payload.get("title"), fallback="Aspen Keys Arrangement")
-    duration = _validate_source_duration(source_url)
+    metadata = _validated_source_metadata(source_url)
+    source_title = str(metadata.get("title") or "").strip()
+    requested_title = str(payload.get("title") or "").strip()
+    title = sanitize_title(requested_title or source_title, fallback="Aspen Keys Arrangement")
+    duration_value = metadata.get("duration")
+    duration = float(duration_value) if duration_value is not None else None
 
     with tempfile.TemporaryDirectory(prefix="aspen-keys-") as tmp:
         workdir = Path(tmp)
@@ -215,6 +218,7 @@ def handler(job: dict) -> dict:
         data = bundle.read_bytes()
 
         manifest["source_duration_seconds"] = duration
+        manifest["source_title"] = source_title or None
         return {
             "bundle_name": bundle.name,
             "bundle_base64": base64.b64encode(data).decode("ascii"),

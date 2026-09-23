@@ -9,6 +9,13 @@ describe("normalizeCreatePayload", () => {
     });
   });
 
+  it("preserves an empty title so the worker can use YouTube metadata", () => {
+    expect(normalizeCreatePayload({ sourceUrl: "https://youtu.be/P883-nSegbY" })).toEqual({
+      source_url: "https://youtu.be/P883-nSegbY",
+      title: "",
+    });
+  });
+
   it("rejects non-YouTube URLs", () => {
     expect(() => normalizeCreatePayload({ sourceUrl: "https://example.com/song" })).toThrow(/YouTube/);
   });
