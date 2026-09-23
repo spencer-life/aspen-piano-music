@@ -90,3 +90,24 @@ Do these only after code, CI, worker image, frontend, and Netlify project are ot
 4. Add `RUNPOD_API_KEY`, generated `RUNPOD_ENDPOINT_ID`, and a private `ASPEN_ACCESS_CODE` to Netlify.
 5. Connect/deploy the Netlify project from the GitHub repository.
 6. Run the Goodday end-to-end smoke test and inspect the generated PDF before calling production ready.
+
+
+## Netlify deployment without Netlify builds
+
+Normal production deployment is handled from the public GitHub repository by `.github/workflows/netlify-deploy.yml`.
+
+The workflow uses GitHub Actions to install the function dependencies and runs:
+
+```bash
+netlify deploy --prod --no-build --dir site --functions netlify/functions
+```
+
+Netlify receives the already-prepared static files and locally bundled functions; Netlify does not run the project's build command for this path.
+
+One repository Actions secret is required:
+
+```text
+NETLIFY_AUTH_TOKEN
+```
+
+The Netlify site ID is already stored in the workflow because it is not a secret. After the token is present, pushes to `main` that touch the site, functions, or deployment config deploy automatically.

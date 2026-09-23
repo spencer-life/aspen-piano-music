@@ -1,0 +1,54 @@
+name: Netlify production deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "netlify/**"
+      - "netlify.toml"
+      - "package.json"
+      - ".github/workflows/netlify-deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: netlify-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NETLIFY_SITE_ID: 43c27623-7862-48c2-9f7f-c130f18892ac
+  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Skip until Netlify token is configured
+        if: env.NETLIFY_AUTH_TOKEN == ''
+        run: |
+          echo "NETLIFY_AUTH_TOKEN is not configured; deployment skipped."
+          echo "Add the repository Actions secret once, then rerun this workflow."
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        if: env.NETLIFY_AUTH_TOKEN != ''
+        with:
+          cache: true
+
+      - name: Install function dependencies
+        if: env.NETLIFY_AUTH_TOKEN != ''
+        run: npm install --no-audit --no-fund
+
+      - name: Deploy prebuilt site and functions
+        if: env.NETLIFY_AUTH_TOKEN != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx -y netlify-cli@27.8.0 deploy             --prod             --no-build             --site "$NETLIFY_SITE_ID"             --auth "$NETLIFY_AUTH_TOKEN"             --dir site             --functions netlify/functions             --message "GitHub $GITHUB_SHA"
