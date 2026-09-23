@@ -35,4 +35,4 @@ run = "node scripts/provision-runpod.mjs"
 run = "node scripts/smoke-runpod.mjs"
 
 [tasks."agent:chrome"]
-run = "npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true"
+run = "npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true --chromeArg=--enable-features=WebMCP --isolated=true"

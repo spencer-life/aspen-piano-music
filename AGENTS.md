@@ -21,7 +21,7 @@ Keep this route minimal. Do not add Demucs, Basic Pitch, Gemini, a database, que
 - `GET /api/jobs/:jobId/download`
 - `GET /api/health`
 
-RunPod secrets are `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`; never expose them to the browser or commit them. RunPod queue endpoints authenticate with the raw API key in the `Authorization` header.
+RunPod secrets are `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`; never expose them to the browser or commit them. Paid generation also requires `ASPEN_ACCESS_CODE`, which is validated only in Netlify Functions. RunPod queue endpoints authenticate with the raw API key in the `Authorization` header.
 
 ## Worker
 Source: `backend/worker/`.
@@ -32,7 +32,11 @@ Worker image publishing is handled by `.github/workflows/worker-image.yml` and t
 
 The initial worker caps source videos at six minutes and keeps result bundles below 7 MB so the base64 payload remains safely below RunPod's 10 MB async payload limit. Keep that guard unless artifact transport is redesigned.
 
-RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test and then validates the ZIP with `scripts/verify-bundle.py`.\n\nScore engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, and Aspen Keys arranger/encoding metadata.\n\nPiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
+RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test and then validates the ZIP with `scripts/verify-bundle.py`.
+
+Score engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, and Aspen Keys arranger/encoding metadata.
+
+PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
 
 ## Frontend
 Static source: `site/`. Keep it framework-free unless product requirements justify a framework.
@@ -61,4 +65,4 @@ Renovate is configured locally for the same reason; do not add Dependabot versio
 Use a working branch. After each coherent validated slice, inspect the actual diff/history and commit with the repository's established style. Keep commits small and meaningful.
 
 ## Manual prerequisites
-Keep manual account/credential steps until the end. See `docs/BACKEND.md`. The intended final manual steps are: authorize RunPod billing/API access, make GHCR readable to RunPod if necessary, provision the endpoint, add its key/ID to Netlify, verify Renovate repository access, and perform the final Goodday end-to-end PDF/audio check.
+Keep manual account/credential steps until the end. See `docs/BACKEND.md`. The intended final manual steps are: authorize RunPod billing/API access, make GHCR readable to RunPod if necessary, provision the endpoint, add its key/ID plus `ASPEN_ACCESS_CODE` to Netlify, connect/deploy the Netlify project, verify Renovate repository access, and perform the final Goodday end-to-end PDF/audio check.
