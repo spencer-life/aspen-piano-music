@@ -10,7 +10,16 @@ depends = ["install"]
 run = [
   "npm run typecheck",
   "npm test",
+  "mise run site:ci",
   "python3 -m unittest discover -s backend/worker -p 'test_*.py'",
+]
+
+[tasks."site:ci"]
+run = [
+  "node --check site/app.js",
+  "node --check site/webmcp.js",
+  "test -s site/index.html",
+  "test -s site/styles.css",
 ]
 
 [tasks."worker:test"]
@@ -24,3 +33,6 @@ run = "node scripts/provision-runpod.mjs"
 
 [tasks."runpod:smoke"]
 run = "node scripts/smoke-runpod.mjs"
+
+[tasks."agent:chrome"]
+run = "npx -y chrome-devtools-mcp@latest --categoryExperimentalWebmcp=true"
