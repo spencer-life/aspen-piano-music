@@ -30,14 +30,15 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m http.server 4173 --directory site > /tmp/aspen-keys-http.log 2>&1 &
-          for attempt in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
-              exit 0
+          retries=20
+          until curl --fail --silent http://127.0.0.1:4173/ > /dev/null; do
+            retries=$((retries - 1))
+            if (( retries == 0 )); then
+              cat /tmp/aspen-keys-http.log
+              exit 1
             fi
             sleep 0.5
           done
-          cat /tmp/aspen-keys-http.log
-          exit 1
 
       - name: Capture desktop and mobile
         shell: bash
@@ -55,12 +56,19 @@ jobs:
             exit 1
           fi
 
-          mkdir -p .visual-review
-          "$chrome"             --headless=new             --no-sandbox             --disable-gpu             --disable-dev-shm-usage             --hide-scrollbars             --window-size=1440,1600             --screenshot=.visual-review/desktop.png             http://127.0.0.1:4173/
+          mkdir -p visual-review
+          common_args=(
+            --headless=new
+            --no-sandbox
+            --disable-gpu
+            --disable-dev-shm-usage
+            --hide-scrollbars
+          )
 
-          "$chrome"             --headless=new             --no-sandbox             --disable-gpu             --disable-dev-shm-usage             --hide-scrollbars             --window-size=390,1400             --screenshot=.visual-review/mobile.png             http://127.0.0.1:4173/
+          "$chrome" "${common_args[@]}" --window-size=1440,1600 --screenshot=visual-review/desktop.png http://127.0.0.1:4173/
+          "$chrome" "${common_args[@]}" --window-size=390,1400 --screenshot=visual-review/mobile.png http://127.0.0.1:4173/
 
-          cat > .visual-review/manifest.json <<'JSON'
+          cat > visual-review/manifest.json <<'JSON'
           {
             "routes": [
               {
@@ -74,6 +82,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aspen-keys-visual-review
-          path: .visual-review
+          path: visual-review
           if-no-files-found: error
           retention-days: 14
