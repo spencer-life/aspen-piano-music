@@ -34,7 +34,7 @@ The initial worker caps source videos at six minutes and keeps result bundles be
 
 RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test and then validates the ZIP with `scripts/verify-bundle.py`.
 
-Score engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, and Aspen Keys arranger/encoding metadata.
+Score engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, Aspen Keys arranger/encoding metadata, and PiCoGen2 chord symbols recovered from `piano.txt`.
 
 PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
 
