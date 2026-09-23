@@ -98,7 +98,7 @@ def _render_artifacts(workdir: Path, title: str) -> dict[str, Path]:
         cwd=workdir,
         env=qt_env,
     )
-    patch_musicxml(musicxml, title)
+    patch_musicxml(musicxml, title, workdir / "piano.txt")
     _run(
         ["xvfb-run", "-a", muse, *style_args, "-o", str(pdf), str(musicxml)],
         cwd=workdir,
