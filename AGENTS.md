@@ -63,11 +63,19 @@ This keeps Netlify build usage at zero for normal deploys. Do not replace it wit
 The workflow requires one GitHub Actions secret: `NETLIFY_AUTH_TOKEN`. The Netlify site ID is non-secret and pinned in the workflow.
 
 ## CI
-Follow `spencer-life/github-workflows/ROUTING.md`. Repository-specific commands live in mise. Required local/CI contract is `mise run ci`.
+Follow `spencer-life/github-workflows/ROUTING.md`. `mise run ci` remains the full local validation command.
 
-This repository is public while `spencer-life/github-workflows` is private. GitHub cannot resolve that private reusable workflow from this public repository, so the minimum baseline from trusted catalog commit `742d149b1e75ef50184861f984fcfe82dfe9d833` is mirrored locally in `.github/workflows/ci.yml`. Keep it aligned with the catalog rather than inventing a parallel CI policy.
+GitHub Actions is deliberately path-scoped:
+- `.github/workflows/ci.yml` runs only on non-documentation pull requests, detects whether web and/or worker code changed, and skips irrelevant test surfaces. Security checks still run for every non-doc code/config PR.
+- `.github/workflows/visual-review.yml` runs automatically only when `site/index.html` or `site/styles.css` changes.
+- `.github/workflows/worker-image.yml` runs only after production worker files change on `main`; test-only worker changes do not rebuild the large GPU image. Workflow-only edits are tested by security CI and require manual dispatch if an image-build smoke test is desired.
+- `.github/workflows/netlify-deploy.yml` runs only when production site/functions/config files change on `main`.
 
-Renovate is configured locally for the same reason; do not add Dependabot version-update PRs on top of it. Renovate GitHub App access still must be verified separately.
+Keep `cancel-in-progress` concurrency enabled so obsolete runs stop when a newer commit supersedes them. Keep third-party actions pinned to full commit SHAs. Do not add push-based duplicate CI for checks already covered on pull requests.
+
+The worker image uses registry/inline Docker cache metadata instead of GitHub Actions cache export because the PiCoGen2 base image is very large; exporting its layers to the Actions cache previously dominated the workflow runtime.
+
+Renovate is configured locally; do not add Dependabot version-update PRs on top of it. Renovate GitHub App access still must be verified separately.
 
 Use a working branch. After each coherent validated slice, inspect the actual diff/history and commit with the repository's established style. Keep commits small and meaningful.
 

@@ -1,4 +1,4 @@
-FROM tanchihpin0517/picogen2:latest-full
+FROM tanchihpin0517/picogen2:latest-full@sha256:751b170345626662728cc8dea6e0bbd2a6d55a8d7569f7f4405b99f083194d7d
 
 USER root
 RUN apt-get update \

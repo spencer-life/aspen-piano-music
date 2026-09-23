@@ -4,13 +4,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "site/**"
-      - "netlify.toml"
-      - ".github/workflows/visual-review.yml"
+      - "site/index.html"
+      - "site/styles.css"
   workflow_dispatch:
 
 concurrency:
-  group: visual-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: visual-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -19,7 +18,7 @@ permissions:
 jobs:
   screenshots:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,6 +50,7 @@ jobs:
               break
             fi
           done
+
           if [[ -z "$chrome" ]]; then
             echo "No Chromium-based browser found on the runner." >&2
             exit 1
@@ -68,20 +68,10 @@ jobs:
           "$chrome" "${common_args[@]}" --window-size=1440,1600 --screenshot=visual-review/desktop.png http://127.0.0.1:4173/
           "$chrome" "${common_args[@]}" --window-size=390,1400 --screenshot=visual-review/mobile.png http://127.0.0.1:4173/
 
-          cat > visual-review/manifest.json <<'JSON'
-          {
-            "routes": [
-              {
-                "path": "/",
-                "screenshots": ["desktop.png", "mobile.png"]
-              }
-            ]
-          }
-          JSON
-
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aspen-keys-visual-review
           path: visual-review
           if-no-files-found: error
-          retention-days: 14
+          compression-level: 0
+          retention-days: 7
