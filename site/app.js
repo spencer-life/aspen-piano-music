@@ -44,20 +44,14 @@ function accessCode() {
   return window.localStorage.getItem(ACCESS_STORAGE_KEY) || "";
 }
 
-function requestAccessCode() {
+function requestAccessCode({ invalid = false } = {}) {
   if (accessPromptResolve) {
-    return new Promise((resolve) => {
-      const previous = accessPromptResolve;
-      accessPromptResolve = (value) => {
-        previous(value);
-        resolve(value);
-      };
-    });
+    throw new Error("The Aspen Keys access prompt is already open.");
   }
 
-  accessInput.value = accessCode();
-  accessError.hidden = true;
-  accessDialog.showModal();
+  accessInput.value = invalid ? "" : accessCode();
+  accessError.hidden = !invalid;
+  if (!accessDialog.open) accessDialog.showModal();
   window.setTimeout(() => accessInput.focus(), 0);
 
   return new Promise((resolve) => {
@@ -72,20 +66,26 @@ function resolveAccessPrompt(value) {
   resolve(value);
 }
 
-async function apiFetch(url, init = {}, canRetry = true) {
-  const headers = new Headers(init.headers || {});
-  headers.set("Accept", headers.get("Accept") || "application/json");
-  const code = accessCode();
-  if (code) headers.set("X-Aspen-Key", code);
+async function apiFetch(url, init = {}) {
+  let code = accessCode();
+  let invalid = false;
 
-  const response = await fetch(url, { ...init, headers });
-  if (response.status !== 401 || !canRetry) return response;
+  for (;;) {
+    const headers = new Headers(init.headers || {});
+    headers.set("Accept", headers.get("Accept") || "application/json");
+    if (code) headers.set("X-Aspen-Key", code);
 
-  const nextCode = await requestAccessCode();
-  if (!nextCode) return response;
+    const response = await fetch(url, { ...init, headers });
+    if (response.status !== 401) return response;
 
-  window.localStorage.setItem(ACCESS_STORAGE_KEY, nextCode);
-  return apiFetch(url, init, false);
+    window.localStorage.removeItem(ACCESS_STORAGE_KEY);
+    const nextCode = await requestAccessCode({ invalid: invalid || Boolean(code) });
+    if (!nextCode) return response;
+
+    code = nextCode;
+    invalid = true;
+    window.localStorage.setItem(ACCESS_STORAGE_KEY, code);
+  }
 }
 
 function setState(next) {
@@ -289,10 +289,6 @@ export async function startArrangement({ sourceUrl, title } = {}) {
     });
     const payload = await responsePayload(response);
     if (!response.ok || !payload.jobId) {
-      if (response.status === 401) {
-        window.localStorage.removeItem(ACCESS_STORAGE_KEY);
-        accessError.hidden = false;
-      }
       throw new Error(payload.error || "Aspen Keys could not start this arrangement.");
     }
 

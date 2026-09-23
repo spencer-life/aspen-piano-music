@@ -530,7 +530,6 @@ footer span:first-child {
 
 .access-dialog::backdrop {
   background: rgba(14, 27, 22, 0.55);
-  backdrop-filter: blur(3px);
 }
 
 .access-dialog form {
