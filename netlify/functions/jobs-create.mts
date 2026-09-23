@@ -1,9 +1,13 @@
 import type { Config } from "@netlify/functions";
+import { requireAspenAccess } from "./_shared/auth.ts";
 import { runpodFetch } from "./_shared/runpod.ts";
 import { normalizeCreatePayload } from "./_shared/validation.ts";
 
 export default async (req: Request) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+
+  const accessResponse = await requireAspenAccess(req);
+  if (accessResponse) return accessResponse;
 
   try {
     const input = normalizeCreatePayload(await req.json());

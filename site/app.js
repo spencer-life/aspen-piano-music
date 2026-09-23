@@ -11,25 +11,82 @@ const statusTime = document.querySelector("#status-time");
 const progressBar = document.querySelector("#progress-bar");
 const readyRegion = document.querySelector("#ready-region");
 const readyTitle = document.querySelector("#ready-title");
-const downloadLink = document.querySelector("#download-link");
+const downloadButton = document.querySelector("#download-link");
 const errorRegion = document.querySelector("#error-region");
 const errorCopy = document.querySelector("#error-copy");
 const retryButton = document.querySelector("#retry-button");
+const accessDialog = document.querySelector("#access-dialog");
+const accessForm = document.querySelector("#access-form");
+const accessInput = document.querySelector("#access-code");
+const accessError = document.querySelector("#access-error");
+const accessCancel = document.querySelector("#access-cancel");
 
 const POLL_MS = 5000;
 const MAX_POLL_MS = 15 * 60 * 1000;
+const ACCESS_STORAGE_KEY = "aspen-keys-access";
 
 let activeJobId = null;
 let pollTimer = null;
 let startedAt = 0;
 let elapsedTimer = null;
 let currentState = "idle";
+let readyDownloadUrl = null;
+let readyBundleName = "Aspen Keys.zip";
+let accessPromptResolve = null;
 
 const statusText = {
   IN_QUEUE: ["Waiting for a piano…", "Your song is queued for the arrangement model.", 22],
   IN_PROGRESS: ["Listening and arranging…", "Aspen Keys is turning the song into a two-hand piano performance.", 62],
   COMPLETED: ["Finishing the score…", "The arrangement is being packaged for download.", 92],
 };
+
+function accessCode() {
+  return window.localStorage.getItem(ACCESS_STORAGE_KEY) || "";
+}
+
+function requestAccessCode() {
+  if (accessPromptResolve) {
+    return new Promise((resolve) => {
+      const previous = accessPromptResolve;
+      accessPromptResolve = (value) => {
+        previous(value);
+        resolve(value);
+      };
+    });
+  }
+
+  accessInput.value = accessCode();
+  accessError.hidden = true;
+  accessDialog.showModal();
+  window.setTimeout(() => accessInput.focus(), 0);
+
+  return new Promise((resolve) => {
+    accessPromptResolve = resolve;
+  });
+}
+
+function resolveAccessPrompt(value) {
+  if (!accessPromptResolve) return;
+  const resolve = accessPromptResolve;
+  accessPromptResolve = null;
+  resolve(value);
+}
+
+async function apiFetch(url, init = {}, canRetry = true) {
+  const headers = new Headers(init.headers || {});
+  headers.set("Accept", headers.get("Accept") || "application/json");
+  const code = accessCode();
+  if (code) headers.set("X-Aspen-Key", code);
+
+  const response = await fetch(url, { ...init, headers });
+  if (response.status !== 401 || !canRetry) return response;
+
+  const nextCode = await requestAccessCode();
+  if (!nextCode) return response;
+
+  window.localStorage.setItem(ACCESS_STORAGE_KEY, nextCode);
+  return apiFetch(url, init, false);
+}
 
 function setState(next) {
   currentState = next;
@@ -66,6 +123,8 @@ function resetOutput() {
   clearPoll();
   stopClock();
   activeJobId = null;
+  readyDownloadUrl = null;
+  readyBundleName = "Aspen Keys.zip";
   statusRegion.hidden = true;
   readyRegion.hidden = true;
   errorRegion.hidden = true;
@@ -107,9 +166,16 @@ function showReady(payload) {
   readyTitle.textContent = chosenTitle
     ? `${chosenTitle} is ready.`
     : "Your piano arrangement is ready.";
-  downloadLink.href = payload.downloadUrl;
+  readyDownloadUrl = payload.downloadUrl;
+  readyBundleName = payload.bundleName || "Aspen Keys.zip";
   generateButton.disabled = false;
   setState("ready");
+}
+
+async function responsePayload(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) return response.json();
+  return { error: await response.text() };
 }
 
 async function pollJob(jobId) {
@@ -118,10 +184,8 @@ async function pollJob(jobId) {
       throw new Error("This arrangement is taking longer than expected. Try again in a moment.");
     }
 
-    const response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}`, {
-      headers: { Accept: "application/json" },
-    });
-    const payload = await response.json();
+    const response = await apiFetch(`/api/jobs/${encodeURIComponent(jobId)}`);
+    const payload = await responsePayload(response);
     if (!response.ok) throw new Error(payload.error || "The arrangement could not be completed.");
 
     setStatus(payload.status);
@@ -133,6 +197,33 @@ async function pollJob(jobId) {
     pollTimer = window.setTimeout(() => pollJob(jobId), POLL_MS);
   } catch (error) {
     showError(error instanceof Error ? error.message : "The arrangement could not be completed.");
+  }
+}
+
+async function downloadBundle() {
+  if (!readyDownloadUrl) return;
+  downloadButton.disabled = true;
+
+  try {
+    const response = await apiFetch(readyDownloadUrl);
+    if (!response.ok) {
+      const payload = await responsePayload(response);
+      throw new Error(payload.error || "The download is not available yet.");
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = readyBundleName;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
+  } catch (error) {
+    showError(error instanceof Error ? error.message : "The download could not be opened.");
+  } finally {
+    downloadButton.disabled = false;
   }
 }
 
@@ -151,7 +242,7 @@ export function getArrangementState() {
     title: titleInput.value.trim(),
     jobId: activeJobId,
     ready: currentState === "ready",
-    downloadUrl: currentState === "ready" ? downloadLink.href : null,
+    downloadUrl: currentState === "ready" ? readyDownloadUrl : null,
   };
 }
 
@@ -191,13 +282,17 @@ export async function startArrangement({ sourceUrl, title } = {}) {
   startClock();
 
   try {
-    const response = await fetch("/api/jobs", {
+    const response = await apiFetch("/api/jobs", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sourceUrl: source, title: sheetTitle }),
     });
-    const payload = await response.json();
+    const payload = await responsePayload(response);
     if (!response.ok || !payload.jobId) {
+      if (response.status === 401) {
+        window.localStorage.removeItem(ACCESS_STORAGE_KEY);
+        accessError.hidden = false;
+      }
       throw new Error(payload.error || "Aspen Keys could not start this arrangement.");
     }
 
@@ -220,6 +315,30 @@ form.addEventListener("submit", (event) => {
 retryButton.addEventListener("click", () => {
   errorRegion.hidden = true;
   sourceInput.focus();
+});
+
+downloadButton.addEventListener("click", () => {
+  downloadBundle().catch(() => {});
+});
+
+accessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const code = accessInput.value.trim();
+  if (!code) return;
+  window.localStorage.setItem(ACCESS_STORAGE_KEY, code);
+  accessDialog.close();
+  resolveAccessPrompt(code);
+});
+
+accessCancel.addEventListener("click", () => {
+  accessDialog.close();
+  resolveAccessPrompt(null);
+});
+
+accessDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  accessDialog.close();
+  resolveAccessPrompt(null);
 });
 
 registerWebMCPTools({
