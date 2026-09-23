@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 import runpod
 import torch
 
-from core import sanitize_title, validate_youtube_url
+from core import sanitize_title, validate_youtube_url\nfrom engraving import STYLE_PATH, patch_musicxml
 
 PICOGEN_ROOT = Path(os.getenv("PICOGEN_ROOT", "/home/picogen2/picogen2"))
 SOUNDFONT = Path(os.getenv("PIANO_SOUNDFONT", "/usr/share/sounds/sf2/FluidR3_GM.sf2"))

@@ -10,7 +10,7 @@ Backend-first architecture is now defined. Frontend must stay aligned with this 
 2. RunPod Serverless runs the GPU worker.
 3. The worker uses the official PiCoGen2 `latest-full` image, which already contains the PiCoGen2/SheetSage/beat-model checkpoints.
 4. PiCoGen2 generates `piano.mid` from a YouTube URL.
-5. MuseScore CLI engraves MusicXML/PDF; FluidSynth + FFmpeg renders piano MP3.
+5. MuseScore CLI engraves MusicXML/PDF using the Aspen Keys print style; FluidSynth + FFmpeg renders piano MP3.
 6. The worker returns one ZIP bundle. Netlify persists completed bundles in Netlify Blobs and serves downloads.
 
 Keep this route minimal. Do not add Demucs, Basic Pitch, Gemini, a database, queues, or additional cloud services unless testing shows the current route cannot meet the product goal.
@@ -32,7 +32,7 @@ Worker image publishing is handled by `.github/workflows/worker-image.yml` and t
 
 The initial worker caps source videos at six minutes and keeps result bundles below 7 MB so the base64 payload remains safely below RunPod's 10 MB async payload limit. Keep that guard unless artifact transport is redesigned.
 
-RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test.
+RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test and then validates the ZIP with `scripts/verify-bundle.py`.\n\nScore engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, and Aspen Keys arranger/encoding metadata.
 
 PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
 

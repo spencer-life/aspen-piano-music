@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+import fs from "node:fs/promises";\nimport { spawnSync } from "node:child_process";
 
 const apiKey = process.env.RUNPOD_API_KEY;
 const endpointId = process.env.RUNPOD_ENDPOINT_ID;
