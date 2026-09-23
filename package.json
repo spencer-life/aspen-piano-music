@@ -8,12 +8,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@netlify/blobs": "^11.1.0",
-    "@netlify/functions": "^6.0.0"
+    "@netlify/blobs": "11.1.0",
+    "@netlify/functions": "6.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
+    "@types/node": "24.0.0",
+    "typescript": "5.9.0",
+    "vitest": "5.0.1"
   }
 }
