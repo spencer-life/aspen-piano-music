@@ -18,3 +18,9 @@ run = "python3 -m unittest discover -s backend/worker -p 'test_*.py'"
 
 [tasks."worker:build"]
 run = "docker build -f backend/worker/Dockerfile -t aspen-keys-worker ."
+
+[tasks."runpod:provision"]
+run = "node scripts/provision-runpod.mjs"
+
+[tasks."runpod:smoke"]
+run = "node scripts/smoke-runpod.mjs"

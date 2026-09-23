@@ -37,7 +37,7 @@ export async function runpodFetch(path: string, init: RequestInit = {}) {
   const response = await fetch(`${RUNPOD_ROOT}/${endpointId}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: apiKey,
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
