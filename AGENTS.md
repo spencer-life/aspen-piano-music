@@ -32,9 +32,7 @@ Worker image publishing is handled by `.github/workflows/worker-image.yml` and t
 
 The initial worker caps source videos at six minutes and keeps result bundles below 7 MB so the base64 payload remains safely below RunPod's 10 MB async payload limit. Keep that guard unless artifact transport is redesigned.
 
-RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test and then validates the ZIP with `scripts/verify-bundle.py`.\n\nScore engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, and Aspen Keys arranger/encoding metadata.
-
-PiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
+RunPod provisioning is scripted in `scripts/provision-runpod.mjs`; the intended initial endpoint is queue based, `AMPERE_24`, min workers 0, max workers 1, FlashBoot enabled. `scripts/smoke-runpod.mjs` performs the direct end-to-end worker smoke test and then validates the ZIP with `scripts/verify-bundle.py`.\n\nScore engraving lives in `backend/worker/engraving.py` plus `backend/worker/aspen-keys.mss`. Preserve US Letter page output, readable margins, the supplied title, and Aspen Keys arranger/encoding metadata.\n\nPiCoGen2 trained weights/data are non-commercial licensed upstream. Treat this project as personal/noncommercial unless licensing is revisited.
 
 ## Frontend
 Static source: `site/`. Keep it framework-free unless product requirements justify a framework.
