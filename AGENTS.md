@@ -55,6 +55,13 @@ WebMCP tools must never expose secrets, hidden admin state, or deployment operat
 
 Use Chrome DevTools MCP/browser evidence to judge actual rendered behavior. Agent tools operate state; browser inspection judges the result.
 
+## Netlify deployment
+Production deploys intentionally use `.github/workflows/netlify-deploy.yml`, not Netlify's Git-connected build pipeline. GitHub Actions packages and uploads the already-prepared `site/` directory plus Netlify Functions with `netlify deploy --no-build`.
+
+This keeps Netlify build usage at zero for normal deploys. Do not replace it with a Netlify build hook or Git-connected remote build unless the user explicitly chooses to spend Netlify build credits.
+
+The workflow requires one GitHub Actions secret: `NETLIFY_AUTH_TOKEN`. The Netlify site ID is non-secret and pinned in the workflow.
+
 ## CI
 Follow `spencer-life/github-workflows/ROUTING.md`. Repository-specific commands live in mise. Required local/CI contract is `mise run ci`.
 
@@ -65,4 +72,4 @@ Renovate is configured locally for the same reason; do not add Dependabot versio
 Use a working branch. After each coherent validated slice, inspect the actual diff/history and commit with the repository's established style. Keep commits small and meaningful.
 
 ## Manual prerequisites
-Keep manual account/credential steps until the end. See `docs/BACKEND.md`. The intended final manual steps are: authorize RunPod billing/API access, make GHCR readable to RunPod if necessary, provision the endpoint, add its key/ID plus `ASPEN_ACCESS_CODE` to Netlify, connect/deploy the Netlify project, verify Renovate repository access, and perform the final Goodday end-to-end PDF/audio check.
+Keep manual account/credential steps until the end. See `docs/BACKEND.md`. The intended final manual steps are: add one GitHub `NETLIFY_AUTH_TOKEN` secret, authorize RunPod billing/API access, make GHCR readable to RunPod if necessary, provision the endpoint, add its key/ID plus `ASPEN_ACCESS_CODE` to Netlify, verify Renovate repository access, and perform the final Goodday end-to-end PDF/audio check.
