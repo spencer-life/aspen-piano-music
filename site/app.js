@@ -24,6 +24,8 @@ const accessCancel = document.querySelector("#access-cancel");
 const POLL_MS = 5000;
 const MAX_POLL_MS = 15 * 60 * 1000;
 const ACCESS_STORAGE_KEY = "aspen-keys-access";
+const JOB_STORAGE_KEY = "aspen-keys-active-job";
+const RESUME_MAX_MS = 25 * 60 * 1000;
 
 let activeJobId = null;
 let pollTimer = null;
@@ -100,10 +102,10 @@ function formatElapsed(ms) {
   return minutes ? `${minutes}:${remainder}` : `0:${remainder}`;
 }
 
-function startClock() {
+function startClock(started = Date.now()) {
   stopClock();
-  startedAt = Date.now();
-  statusTime.textContent = "0:00";
+  startedAt = started;
+  statusTime.textContent = formatElapsed(Date.now() - startedAt);
   elapsedTimer = window.setInterval(() => {
     statusTime.textContent = formatElapsed(Date.now() - startedAt);
   }, 1000);
@@ -119,10 +121,49 @@ function clearPoll() {
   pollTimer = null;
 }
 
+function saveActiveJob() {
+  if (!activeJobId) return;
+  window.localStorage.setItem(
+    JOB_STORAGE_KEY,
+    JSON.stringify({
+      jobId: activeJobId,
+      sourceUrl: sourceInput.value.trim(),
+      title: titleInput.value.trim(),
+      startedAt,
+    }),
+  );
+}
+
+function clearActiveJob() {
+  window.localStorage.removeItem(JOB_STORAGE_KEY);
+}
+
+function readActiveJob() {
+  try {
+    const raw = window.localStorage.getItem(JOB_STORAGE_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw);
+    if (
+      !value ||
+      typeof value.jobId !== "string" ||
+      typeof value.startedAt !== "number" ||
+      Date.now() - value.startedAt > RESUME_MAX_MS
+    ) {
+      clearActiveJob();
+      return null;
+    }
+    return value;
+  } catch {
+    clearActiveJob();
+    return null;
+  }
+}
+
 function resetOutput() {
   clearPoll();
   stopClock();
   activeJobId = null;
+  clearActiveJob();
   readyDownloadUrl = null;
   readyBundleName = "Aspen Keys.zip";
   statusRegion.hidden = true;
@@ -219,6 +260,7 @@ async function downloadBundle() {
     document.body.append(link);
     link.click();
     link.remove();
+    clearActiveJob();
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
   } catch (error) {
     showError(error instanceof Error ? error.message : "The download could not be opened.");
@@ -294,6 +336,7 @@ export async function startArrangement({ sourceUrl, title } = {}) {
 
     activeJobId = payload.jobId;
     setStatus(payload.status || "IN_QUEUE");
+    saveActiveJob();
     pollTimer = window.setTimeout(() => pollJob(activeJobId), 1200);
     return getArrangementState();
   } catch (error) {
@@ -337,9 +380,27 @@ accessDialog.addEventListener("cancel", (event) => {
   resolveAccessPrompt(null);
 });
 
+function restoreActiveJob() {
+  const saved = readActiveJob();
+  if (!saved) return;
+
+  activeJobId = saved.jobId;
+  sourceInput.value = saved.sourceUrl || "";
+  titleInput.value = saved.title || "";
+  readyRegion.hidden = true;
+  errorRegion.hidden = true;
+  statusRegion.hidden = false;
+  generateButton.disabled = true;
+  setStatus("IN_QUEUE");
+  startClock(saved.startedAt);
+  pollTimer = window.setTimeout(() => pollJob(activeJobId), 350);
+}
+
 registerWebMCPTools({
   setSongSource,
   startArrangement,
   getArrangementState,
   resetArrangement,
 });
+
+restoreActiveJob();
