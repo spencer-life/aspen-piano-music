@@ -1,5 +1,5 @@
 [tools]
-node = "24"
+node = "26"
 python = "3.13"
 
 [tasks.install]
